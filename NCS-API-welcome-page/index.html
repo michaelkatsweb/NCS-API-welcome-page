@@ -4200,13 +4200,13 @@
         const group = new THREE.Group();
         // Outer rotating disc (cloud bands)
         const discGeo = new THREE.RingGeometry(2, 12, 32);
-        const discMat = new THREE.MeshBasicMaterial({ color: 0x445566, transparent: true, opacity: 0.25, side: THREE.DoubleSide });
+        const discMat = new THREE.MeshBasicMaterial({ color: 0x556677, transparent: true, opacity: 0.35, side: THREE.DoubleSide });
         const disc = new THREE.Mesh(discGeo, discMat);
         disc.rotation.x = -Math.PI / 2;
         group.add(disc);
         // Inner eye ring
         const eyeGeo = new THREE.RingGeometry(1.5, 2.2, 24);
-        const eyeMat = new THREE.MeshBasicMaterial({ color: 0xdc3545, transparent: true, opacity: 0.3, side: THREE.DoubleSide });
+        const eyeMat = new THREE.MeshBasicMaterial({ color: 0xdc3545, transparent: true, opacity: 0.5, side: THREE.DoubleSide });
         const eye = new THREE.Mesh(eyeGeo, eyeMat);
         eye.rotation.x = -Math.PI / 2;
         group.add(eye);
@@ -4219,10 +4219,10 @@
             pts.push(new THREE.Vector3(Math.cos(angle) * r, 0.1, Math.sin(angle) * r));
           }
           const armGeo = new THREE.BufferGeometry().setFromPoints(pts);
-          const armMat = new THREE.LineBasicMaterial({ color: 0x667788, transparent: true, opacity: 0.3 });
+          const armMat = new THREE.LineBasicMaterial({ color: 0x8899aa, transparent: true, opacity: 0.45 });
           group.add(new THREE.Line(armGeo, armMat));
         }
-        group.position.set(0, 4, 0);
+        group.position.set(0, 7, 0);
         group.visible = false;
         scene.add(group);
         return group;
@@ -4298,8 +4298,17 @@
             precip: Math.random() * 0.15,        // inches/hr
             outlierScore: 0, clusterId: -1,
             isAnomaly: false, anomalyPulse: 0,
-            cloudGroup: null, rainGroup: null, windArrow: null
+            cloudGroup: null, rainGroup: null, windArrow: null,
+            dataColumn: null
           };
+
+          // Data column — vertical bar showing selected layer magnitude
+          const colGeo = new THREE.CylinderGeometry(0.12, 0.12, 1, 8);
+          const colMat = new THREE.MeshPhongMaterial({ color: 0x7cc576, emissive: 0x3a6636, emissiveIntensity: 0.5, transparent: true, opacity: 0.75 });
+          const colMesh = new THREE.Mesh(colGeo, colMat);
+          colMesh.position.set(pos.x + 0.6, 0.5, pos.z);
+          scene.add(colMesh);
+          station.dataColumn = colMesh;
 
           // Cloud above each station (initially invisible)
           const cloudGroup = new THREE.Group();
@@ -4353,6 +4362,7 @@
         stations.forEach(s => {
           scene.remove(s.mesh); scene.remove(s.baseMesh); scene.remove(s.label);
           if (s.windArrow) scene.remove(s.windArrow);
+          if (s.dataColumn) scene.remove(s.dataColumn);
           if (s.cloudGroup) s.cloudGroup.children.forEach(c => scene.remove(c));
         });
         rainParticles.forEach(p => scene.remove(p));
@@ -4506,8 +4516,9 @@
             const count = Math.min(Math.floor(st.precip * 3), 5);
             for (let d = 0; d < count; d++) {
               if (rainParticles.length < 600) {
-                const geo = new THREE.CylinderGeometry(0.02, 0.02, 0.3, 4);
-                const mat = new THREE.MeshBasicMaterial({ color: st.precip > 1.5 ? 0x4466aa : 0x6688cc, transparent: true, opacity: 0.5 });
+                const geo = new THREE.CylinderGeometry(0.015, 0.025, 0.35, 6);
+                const heavyRain = st.precip > 1.5;
+                const mat = new THREE.MeshBasicMaterial({ color: heavyRain ? 0x3355aa : 0x6688cc, transparent: true, opacity: heavyRain ? 0.7 : 0.5 });
                 const drop = new THREE.Mesh(geo, mat);
                 drop.position.set(
                   st.pos3d.x + (Math.random() - 0.5) * 3,
@@ -4530,8 +4541,8 @@
         stations.forEach(st => {
           if (st.windSpeed > 15 && Math.random() < 0.15) {
             if (windStreaks.length < 200) {
-              const geo = new THREE.CylinderGeometry(0.015, 0.015, 0.8, 3);
-              const mat = new THREE.MeshBasicMaterial({ color: 0xcccccc, transparent: true, opacity: 0.2 });
+              const geo = new THREE.CylinderGeometry(0.02, 0.01, 1.2, 6);
+              const mat = new THREE.MeshBasicMaterial({ color: 0xddeeff, transparent: true, opacity: 0.45 });
               const streak = new THREE.Mesh(geo, mat);
               streak.rotation.z = Math.PI / 2; // horizontal
               const rad = st.windDir * Math.PI / 180;
@@ -4542,8 +4553,8 @@
                 st.pos3d.z + (Math.random() - 0.5) * 4
               );
               streak.userData = {
-                vx: Math.sin(rad) * (0.1 + st.windSpeed * 0.003),
-                vz: -Math.cos(rad) * (0.1 + st.windSpeed * 0.003),
+                vx: Math.sin(rad) * (0.15 + st.windSpeed * 0.008),
+                vz: -Math.cos(rad) * (0.15 + st.windSpeed * 0.008),
                 life: 0
               };
               scene.add(streak);
@@ -4579,7 +4590,7 @@
           const hy = -15 + (t - 3) * 0.8;
           const hx = -5 + Math.sin(t * 0.3) * 3;
           const mapPos = geoTo3D(0, 0); // just for Y reference
-          hurricaneEye.position.set(hx, 4, hy);
+          hurricaneEye.position.set(hx, 7, hy);
           hurricaneEye.rotation.y += 0.015 * parseFloat(speedSlider.value); // spin
         } else {
           hurricaneEye.visible = false;
@@ -4617,6 +4628,27 @@
           }
           st.mesh.material.color.setHex(color);
           st.mesh.material.emissive.setHex(color);
+
+          // Data column — height represents magnitude of selected layer
+          if (st.dataColumn) {
+            let norm = 0; // normalized 0-1
+            if (layer === 'temp') {
+              norm = Math.max(0, Math.min(1, (st.temp - 30) / 80)); // 30-110°F range
+            } else if (layer === 'wind') {
+              norm = Math.max(0, Math.min(1, st.windSpeed / 120)); // 0-120 mph
+            } else if (layer === 'pressure') {
+              norm = Math.max(0, Math.min(1, 1 - (st.pressure - 940) / 80)); // 940-1020 hPa inverted (low = tall)
+            } else {
+              norm = Math.max(0, Math.min(1, st.precip / 4)); // 0-4 in/hr
+            }
+            const targetH = 0.3 + norm * 3.5; // height between 0.3 and 3.8 units
+            const curH = st.dataColumn.scale.y;
+            const newH = curH + (targetH - curH) * 0.08; // smooth lerp
+            st.dataColumn.scale.y = newH;
+            st.dataColumn.position.y = newH * 0.5; // keep base on ground
+            st.dataColumn.material.color.setHex(color);
+            st.dataColumn.material.emissive.setHex(color);
+          }
 
           // Clouds: visible when precip > 0.1 or humidity > 85
           const showClouds = st.precip > 0.1 || st.humidity > 85;
@@ -4664,8 +4696,8 @@
           s.position.x += s.userData.vx;
           s.position.z += s.userData.vz;
           s.userData.life++;
-          s.material.opacity = Math.max(0, 0.25 - s.userData.life * 0.004);
-          if (s.userData.life > 60) { scene.remove(s); return false; }
+          s.material.opacity = Math.max(0, 0.5 - s.userData.life * 0.005);
+          if (s.userData.life > 90) { scene.remove(s); return false; }
           return true;
         });
       }
