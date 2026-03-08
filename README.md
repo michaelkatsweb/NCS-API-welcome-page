@@ -145,6 +145,9 @@ NCS-API serves as an R&D initiative within the Heronix ecosystem, exploring real
 ## Author
 
 **Michael Katsaros** — Founder & CEO, Heronix Education Systems
+
+Computer Science student at the University of the People. NCS started as a school project in 2024 — an experiment in streaming clustering algorithms that became a way to practice coding, explore data science, and build something real. It has since grown into an active R&D initiative within the Heronix ecosystem.
+
 - GitHub: [@michaelkatsweb](https://github.com/michaelkatsweb)
 - Website: [heronixedu.com](https://heronixedu.com)
 
