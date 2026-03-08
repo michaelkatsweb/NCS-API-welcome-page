@@ -64,9 +64,9 @@
           <li><a href="#pricing">Pricing</a></li>
           <li class="dropdown"><a href="#"><span>Resources</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
-              <li><a href="blog.html">Blog</a></li>
+
               <li><a href="#faq">FAQ</a></li>
-              <li><a href="/docs" target="_blank">API Documentation</a></li>
+              <li><a href="#algorithm-docs">Algorithm Documentation</a></li>
             </ul>
           </li>
           <li><a href="#contact">Contact</a></li>
@@ -861,6 +861,331 @@
       </div>
     </section><!-- /3D Florida Weather Station Simulation -->
 
+    <!-- Algorithm Documentation Section -->
+    <section id="algorithm-docs" class="section" style="padding: 60px 0; background: #0d0d1a;">
+      <div class="container">
+        <div class="section-title" data-aos="fade-up">
+          <h2>NCS Algorithm Documentation</h2>
+          <p>Mathematical foundations and core concepts of the NeuroCluster Streamer clustering algorithm</p>
+        </div>
+
+        <div class="row gy-4" data-aos="fade-up" data-aos-delay="100">
+          <div class="col-lg-10 mx-auto">
+
+            <!-- Overview -->
+            <div style="background: rgba(26,26,46,0.8); border: 1px solid rgba(124,197,118,0.15); border-radius: 12px; padding: 30px; margin-bottom: 24px;">
+              <h3 style="color: #7cc576; margin-bottom: 16px;">Overview</h3>
+              <p style="color: #ccc; line-height: 1.8;">
+                The NeuroCluster Streamer (NCS) algorithm is a <strong style="color: #eee;">single-pass, online clustering method</strong> designed for streaming data.
+                Unlike batch algorithms (K-Means, DBSCAN) that require the full dataset upfront, NCS processes each data point exactly once as it arrives,
+                making it suitable for real-time applications where data flows continuously and cluster structure may evolve over time.
+              </p>
+              <p style="color: #ccc; line-height: 1.8;">
+                The algorithm maintains a dynamic set of centroids with adaptive distance thresholds. It simultaneously performs
+                <strong style="color: #eee;">cluster assignment</strong>, <strong style="color: #eee;">centroid adaptation</strong>,
+                and <strong style="color: #eee;">outlier scoring</strong> in a single step per data point.
+              </p>
+            </div>
+
+            <!-- Core Data Structures -->
+            <div style="background: rgba(26,26,46,0.8); border: 1px solid rgba(124,197,118,0.15); border-radius: 12px; padding: 30px; margin-bottom: 24px;">
+              <h3 style="color: #7cc576; margin-bottom: 16px;">Core Data Structures</h3>
+              <p style="color: #ccc; line-height: 1.8;">The algorithm maintains three parallel arrays that grow as new clusters are discovered:</p>
+              <div style="background: #0a0a18; border-radius: 8px; padding: 20px; margin: 16px 0; font-family: 'Courier New', monospace; font-size: 14px; color: #b8d4b0; overflow-x: auto;">
+                <span style="color: #6a9fb5;">C</span> = {<span style="color: #f0ad4e;">c</span><sub>1</sub>, <span style="color: #f0ad4e;">c</span><sub>2</sub>, ..., <span style="color: #f0ad4e;">c</span><sub>k</sub>}  &nbsp;&nbsp;<span style="color: #666;">// Centroid vectors (each c<sub>i</sub> &isin; &Reals;<sup>d</sup>)</span><br>
+                <span style="color: #6a9fb5;">&tau;</span> = {<span style="color: #f0ad4e;">&tau;</span><sub>1</sub>, <span style="color: #f0ad4e;">&tau;</span><sub>2</sub>, ..., <span style="color: #f0ad4e;">&tau;</span><sub>k</sub>}  &nbsp;&nbsp;<span style="color: #666;">// Adaptive distance thresholds per cluster</span><br>
+                <span style="color: #6a9fb5;">N</span> = {<span style="color: #f0ad4e;">n</span><sub>1</sub>, <span style="color: #f0ad4e;">n</span><sub>2</sub>, ..., <span style="color: #f0ad4e;">n</span><sub>k</sub>}  &nbsp;&nbsp;<span style="color: #666;">// Assignment counts per cluster</span>
+              </div>
+              <p style="color: #ccc; line-height: 1.8;">
+                <strong style="color: #eee;">k</strong> starts at 0 and grows dynamically up to a configurable maximum <strong style="color: #eee;">K<sub>max</sub></strong>.
+                Each centroid <strong style="color: #eee;">c<sub>i</sub></strong> is a d-dimensional vector in the same feature space as the input data.
+                Each threshold <strong style="color: #eee;">&tau;<sub>i</sub></strong> is initialized to a base value <strong style="color: #eee;">&tau;<sub>0</sub></strong> and adapts over time.
+              </p>
+            </div>
+
+            <!-- Algorithm Steps -->
+            <div style="background: rgba(26,26,46,0.8); border: 1px solid rgba(124,197,118,0.15); border-radius: 12px; padding: 30px; margin-bottom: 24px;">
+              <h3 style="color: #7cc576; margin-bottom: 16px;">Algorithm: Per-Point Processing</h3>
+              <p style="color: #ccc; line-height: 1.8; margin-bottom: 16px;">For each incoming data point <strong style="color: #eee;">x &isin; &Reals;<sup>d</sup></strong>:</p>
+
+              <div style="margin-bottom: 20px;">
+                <h5 style="color: #f0ad4e;">Step 1 &mdash; Bootstrap</h5>
+                <p style="color: #ccc; line-height: 1.8;">
+                  If no centroids exist (k = 0), create the first cluster: set <strong style="color: #eee;">c<sub>1</sub> = x</strong>,
+                  <strong style="color: #eee;">&tau;<sub>1</sub> = &tau;<sub>0</sub></strong>, <strong style="color: #eee;">n<sub>1</sub> = 1</strong>.
+                  Return cluster ID 0 with outlier score 0.
+                </p>
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <h5 style="color: #f0ad4e;">Step 2 &mdash; Nearest Centroid Search</h5>
+                <p style="color: #ccc; line-height: 1.8;">Compute the Euclidean distance from <strong style="color: #eee;">x</strong> to every centroid:</p>
+                <div style="background: #0a0a18; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Courier New', monospace; font-size: 14px; color: #b8d4b0; text-align: center;">
+                  d<sub>i</sub> = &Vert; x &minus; c<sub>i</sub> &Vert;<sub>2</sub> = &radic;(&sum;<sub>j=1..d</sub> (x<sub>j</sub> &minus; c<sub>ij</sub>)<sup>2</sup>)
+                </div>
+                <p style="color: #ccc; line-height: 1.8;">
+                  Find the nearest centroid: <strong style="color: #eee;">i* = argmin<sub>i</sub> d<sub>i</sub></strong>, with minimum distance <strong style="color: #eee;">d* = d<sub>i*</sub></strong>.
+                </p>
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <h5 style="color: #f0ad4e;">Step 3 &mdash; Outlier Scoring</h5>
+                <p style="color: #ccc; line-height: 1.8;">
+                  The outlier score is the ratio of the minimum distance to the nearest cluster's threshold:
+                </p>
+                <div style="background: #0a0a18; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Courier New', monospace; font-size: 14px; color: #b8d4b0; text-align: center;">
+                  outlierScore = d* / (&tau;<sub>i*</sub> + &epsilon;)
+                </div>
+                <p style="color: #ccc; line-height: 1.8;">
+                  where <strong style="color: #eee;">&epsilon;</strong> is a small constant (e.g., 0.001) to prevent division by zero.
+                  An outlier score <strong style="color: #eee;">&gt; 1.0</strong> means the point lies beyond its nearest cluster's acceptance radius.
+                  Scores well below 1.0 indicate the point is close to the cluster center.
+                </p>
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <h5 style="color: #f0ad4e;">Step 4 &mdash; Cluster Assignment or Creation</h5>
+                <p style="color: #ccc; line-height: 1.8;"><strong style="color: #eee;">If d* &gt; &tau;<sub>i*</sub></strong> (point is outside all cluster boundaries):</p>
+                <ul style="color: #ccc; line-height: 2;">
+                  <li>If <strong style="color: #eee;">k &lt; K<sub>max</sub></strong>: create a new cluster with <strong style="color: #eee;">c<sub>k+1</sub> = x</strong>, <strong style="color: #eee;">&tau;<sub>k+1</sub> = &tau;<sub>0</sub></strong></li>
+                  <li>If <strong style="color: #eee;">k = K<sub>max</sub></strong>: assign to the nearest centroid anyway (forced assignment), but the high outlier score is preserved for downstream anomaly detection</li>
+                </ul>
+                <p style="color: #ccc; line-height: 1.8;"><strong style="color: #eee;">If d* &le; &tau;<sub>i*</sub></strong> (point falls within nearest cluster):</p>
+                <ul style="color: #ccc; line-height: 2;">
+                  <li>Assign the point to cluster <strong style="color: #eee;">i*</strong></li>
+                  <li>Proceed to centroid and threshold adaptation (Steps 5 &amp; 6)</li>
+                </ul>
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <h5 style="color: #f0ad4e;">Step 5 &mdash; Centroid Adaptation (Exponential Moving Average)</h5>
+                <p style="color: #ccc; line-height: 1.8;">
+                  The centroid is updated using an exponential moving average with learning rate <strong style="color: #eee;">&alpha;</strong>:
+                </p>
+                <div style="background: #0a0a18; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Courier New', monospace; font-size: 14px; color: #b8d4b0; text-align: center;">
+                  c<sub>i*</sub> &larr; (1 &minus; &alpha;) &middot; c<sub>i*</sub> + &alpha; &middot; x
+                </div>
+                <p style="color: #ccc; line-height: 1.8;">
+                  Typical values: <strong style="color: #eee;">&alpha; = 0.05</strong> (slow adaptation, stable clusters) to
+                  <strong style="color: #eee;">&alpha; = 0.10</strong> (faster tracking of distribution drift).
+                  This allows centroids to gradually follow shifting data distributions without being destabilized by individual outliers.
+                </p>
+              </div>
+
+              <div>
+                <h5 style="color: #f0ad4e;">Step 6 &mdash; Threshold Adaptation</h5>
+                <p style="color: #ccc; line-height: 1.8;">
+                  Each cluster's acceptance threshold adapts based on the distances of points assigned to it:
+                </p>
+                <div style="background: #0a0a18; border-radius: 8px; padding: 16px; margin: 12px 0; font-family: 'Courier New', monospace; font-size: 14px; color: #b8d4b0; text-align: center;">
+                  &tau;<sub>i*</sub> &larr; (1 &minus; &beta;) &middot; &tau;<sub>i*</sub> + &beta; &middot; d*
+                </div>
+                <p style="color: #ccc; line-height: 1.8;">
+                  where <strong style="color: #eee;">&beta;</strong> controls the threshold adaptation rate. A small <strong style="color: #eee;">&beta;</strong> (e.g., 0.02)
+                  makes thresholds change slowly, preserving sensitivity to anomalies. A larger <strong style="color: #eee;">&beta;</strong>
+                  makes thresholds grow more quickly to accommodate dense clusters. Tight clusters (low average d*) will converge to small thresholds,
+                  while dispersed clusters will develop larger acceptance radii.
+                </p>
+              </div>
+            </div>
+
+            <!-- Parameters -->
+            <div style="background: rgba(26,26,46,0.8); border: 1px solid rgba(124,197,118,0.15); border-radius: 12px; padding: 30px; margin-bottom: 24px;">
+              <h3 style="color: #7cc576; margin-bottom: 16px;">Parameters</h3>
+              <div class="table-responsive">
+                <table style="width: 100%; border-collapse: collapse; color: #ccc;">
+                  <thead>
+                    <tr style="border-bottom: 2px solid rgba(124,197,118,0.3);">
+                      <th style="padding: 12px; text-align: left; color: #7cc576;">Symbol</th>
+                      <th style="padding: 12px; text-align: left; color: #7cc576;">Parameter</th>
+                      <th style="padding: 12px; text-align: left; color: #7cc576;">Typical Range</th>
+                      <th style="padding: 12px; text-align: left; color: #7cc576;">Effect</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 12px; font-family: 'Courier New', monospace;">&tau;<sub>0</sub></td>
+                      <td style="padding: 12px;">Base threshold</td>
+                      <td style="padding: 12px;">0.3 &ndash; 0.5</td>
+                      <td style="padding: 12px;">Initial acceptance radius for new clusters. Lower values create more clusters; higher values create fewer, broader clusters.</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 12px; font-family: 'Courier New', monospace;">&alpha;</td>
+                      <td style="padding: 12px;">Learning rate</td>
+                      <td style="padding: 12px;">0.02 &ndash; 0.10</td>
+                      <td style="padding: 12px;">Controls how quickly centroids move toward new data. Lower = more stable; higher = tracks drift faster.</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 12px; font-family: 'Courier New', monospace;">&beta;</td>
+                      <td style="padding: 12px;">Threshold adaptation rate</td>
+                      <td style="padding: 12px;">0.01 &ndash; 0.05</td>
+                      <td style="padding: 12px;">Controls how quickly cluster boundaries expand or contract. Lower = preserves anomaly sensitivity.</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 12px; font-family: 'Courier New', monospace;">K<sub>max</sub></td>
+                      <td style="padding: 12px;">Maximum clusters</td>
+                      <td style="padding: 12px;">10 &ndash; 50</td>
+                      <td style="padding: 12px;">Upper bound on cluster count. Prevents unbounded growth in noisy data. Points beyond this limit are force-assigned.</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 12px; font-family: 'Courier New', monospace;">&epsilon;</td>
+                      <td style="padding: 12px;">Division guard</td>
+                      <td style="padding: 12px;">0.001</td>
+                      <td style="padding: 12px;">Small constant added to thresholds during outlier score computation to avoid division by zero.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Properties -->
+            <div style="background: rgba(26,26,46,0.8); border: 1px solid rgba(124,197,118,0.15); border-radius: 12px; padding: 30px; margin-bottom: 24px;">
+              <h3 style="color: #7cc576; margin-bottom: 16px;">Properties &amp; Complexity</h3>
+              <div class="row">
+                <div class="col-md-6">
+                  <h5 style="color: #f0ad4e;">Time Complexity</h5>
+                  <ul style="color: #ccc; line-height: 2;">
+                    <li><strong style="color: #eee;">Per point:</strong> O(k &middot; d) &mdash; linear scan over k centroids, each with d dimensions</li>
+                    <li><strong style="color: #eee;">Total for n points:</strong> O(n &middot; k &middot; d)</li>
+                    <li><strong style="color: #eee;">With K<sub>max</sub> bound:</strong> O(n &middot; K<sub>max</sub> &middot; d) worst case</li>
+                  </ul>
+                </div>
+                <div class="col-md-6">
+                  <h5 style="color: #f0ad4e;">Space Complexity</h5>
+                  <ul style="color: #ccc; line-height: 2;">
+                    <li><strong style="color: #eee;">O(k &middot; d)</strong> for centroid storage</li>
+                    <li><strong style="color: #eee;">O(k)</strong> for thresholds and counts</li>
+                    <li>Does <strong style="color: #eee;">not</strong> store historical data points</li>
+                  </ul>
+                </div>
+              </div>
+
+              <h5 style="color: #f0ad4e; margin-top: 20px;">Key Properties</h5>
+              <ul style="color: #ccc; line-height: 2;">
+                <li><strong style="color: #eee;">Single-pass:</strong> Each point is processed exactly once; no iterative convergence loops</li>
+                <li><strong style="color: #eee;">Non-parametric cluster count:</strong> k is discovered from data, not specified a priori (unlike K-Means)</li>
+                <li><strong style="color: #eee;">Adaptive boundaries:</strong> Cluster radii expand or contract based on observed point distributions</li>
+                <li><strong style="color: #eee;">Built-in anomaly detection:</strong> Outlier scores are computed as a byproduct of clustering, not a separate pass</li>
+                <li><strong style="color: #eee;">Order-dependent:</strong> Results can vary with input order (inherent to online methods)</li>
+                <li><strong style="color: #eee;">No global objective function:</strong> Unlike K-Means (which minimizes within-cluster variance), NCS uses local threshold decisions</li>
+              </ul>
+            </div>
+
+            <!-- Comparison -->
+            <div style="background: rgba(26,26,46,0.8); border: 1px solid rgba(124,197,118,0.15); border-radius: 12px; padding: 30px; margin-bottom: 24px;">
+              <h3 style="color: #7cc576; margin-bottom: 16px;">Comparison with Standard Algorithms</h3>
+              <div class="table-responsive">
+                <table style="width: 100%; border-collapse: collapse; color: #ccc;">
+                  <thead>
+                    <tr style="border-bottom: 2px solid rgba(124,197,118,0.3);">
+                      <th style="padding: 12px; text-align: left; color: #7cc576;">Property</th>
+                      <th style="padding: 12px; text-align: left; color: #7cc576;">NCS</th>
+                      <th style="padding: 12px; text-align: left; color: #7cc576;">K-Means</th>
+                      <th style="padding: 12px; text-align: left; color: #7cc576;">DBSCAN</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 12px;">Processing mode</td>
+                      <td style="padding: 12px;">Online (streaming)</td>
+                      <td style="padding: 12px;">Batch (iterative)</td>
+                      <td style="padding: 12px;">Batch (single scan)</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 12px;">Cluster count</td>
+                      <td style="padding: 12px;">Discovered automatically</td>
+                      <td style="padding: 12px;">Must be specified (k)</td>
+                      <td style="padding: 12px;">Discovered automatically</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 12px;">Handles drift</td>
+                      <td style="padding: 12px;">Yes (EMA adaptation)</td>
+                      <td style="padding: 12px;">No (static after convergence)</td>
+                      <td style="padding: 12px;">No (static after run)</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 12px;">Outlier detection</td>
+                      <td style="padding: 12px;">Built-in (score per point)</td>
+                      <td style="padding: 12px;">Not built-in</td>
+                      <td style="padding: 12px;">Yes (noise label)</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 12px;">Requires full dataset</td>
+                      <td style="padding: 12px;">No</td>
+                      <td style="padding: 12px;">Yes</td>
+                      <td style="padding: 12px;">Yes</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                      <td style="padding: 12px;">Cluster shapes</td>
+                      <td style="padding: 12px;">Spherical (Euclidean)</td>
+                      <td style="padding: 12px;">Spherical (Euclidean)</td>
+                      <td style="padding: 12px;">Arbitrary (density-based)</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 12px;">Memory</td>
+                      <td style="padding: 12px;">O(k &middot; d)</td>
+                      <td style="padding: 12px;">O(n &middot; d + k &middot; d)</td>
+                      <td style="padding: 12px;">O(n &middot; d)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Pseudocode -->
+            <div style="background: rgba(26,26,46,0.8); border: 1px solid rgba(124,197,118,0.15); border-radius: 12px; padding: 30px; margin-bottom: 24px;">
+              <h3 style="color: #7cc576; margin-bottom: 16px;">Pseudocode</h3>
+              <div style="background: #0a0a18; border-radius: 8px; padding: 24px; font-family: 'Courier New', monospace; font-size: 13px; color: #b8d4b0; overflow-x: auto; line-height: 1.9;">
+<span style="color: #6a9fb5;">function</span> <span style="color: #f0ad4e;">NCS_Process</span>(x, C, &tau;, N, &tau;<sub>0</sub>, &alpha;, &beta;, K<sub>max</sub>):<br>
+&nbsp;&nbsp;<span style="color: #6a9fb5;">if</span> |C| = 0:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;C &larr; C &cup; {x}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&tau; &larr; &tau; &cup; {&tau;<sub>0</sub>}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;N &larr; N &cup; {1}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #6a9fb5;">return</span> (cluster=0, outlier=0)<br>
+<br>
+&nbsp;&nbsp;<span style="color: #666;">// Find nearest centroid</span><br>
+&nbsp;&nbsp;i* &larr; argmin<sub>i</sub> &Vert;x &minus; c<sub>i</sub>&Vert;<sub>2</sub><br>
+&nbsp;&nbsp;d* &larr; &Vert;x &minus; c<sub>i*</sub>&Vert;<sub>2</sub><br>
+&nbsp;&nbsp;score &larr; d* / (&tau;<sub>i*</sub> + &epsilon;)<br>
+<br>
+&nbsp;&nbsp;<span style="color: #6a9fb5;">if</span> d* &gt; &tau;<sub>i*</sub>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #6a9fb5;">if</span> |C| &lt; K<sub>max</sub>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C &larr; C &cup; {x}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&tau; &larr; &tau; &cup; {&tau;<sub>0</sub>}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N &larr; N &cup; {1}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #6a9fb5;">return</span> (cluster=|C|&minus;1, outlier=score)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #6a9fb5;">else</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n<sub>i*</sub> &larr; n<sub>i*</sub> + 1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: #6a9fb5;">return</span> (cluster=i*, outlier=score)<br>
+<br>
+&nbsp;&nbsp;<span style="color: #666;">// Update centroid (EMA)</span><br>
+&nbsp;&nbsp;c<sub>i*</sub> &larr; (1 &minus; &alpha;) &middot; c<sub>i*</sub> + &alpha; &middot; x<br>
+<br>
+&nbsp;&nbsp;<span style="color: #666;">// Adapt threshold</span><br>
+&nbsp;&nbsp;&tau;<sub>i*</sub> &larr; (1 &minus; &beta;) &middot; &tau;<sub>i*</sub> + &beta; &middot; d*<br>
+<br>
+&nbsp;&nbsp;n<sub>i*</sub> &larr; n<sub>i*</sub> + 1<br>
+&nbsp;&nbsp;<span style="color: #6a9fb5;">return</span> (cluster=i*, outlier=score)
+              </div>
+            </div>
+
+            <!-- Limitations -->
+            <div style="background: rgba(26,26,46,0.8); border: 1px solid rgba(124,197,118,0.15); border-radius: 12px; padding: 30px;">
+              <h3 style="color: #7cc576; margin-bottom: 16px;">Limitations &amp; Considerations</h3>
+              <ul style="color: #ccc; line-height: 2;">
+                <li><strong style="color: #eee;">Spherical cluster assumption:</strong> Like K-Means, NCS uses Euclidean distance and implicitly assumes roughly spherical clusters. It will not correctly separate interlocking or non-convex shapes (where DBSCAN excels).</li>
+                <li><strong style="color: #eee;">Sensitivity to &tau;<sub>0</sub>:</strong> The base threshold strongly influences how many clusters are created. It must be tuned relative to the scale of the feature space. Feature normalization is recommended.</li>
+                <li><strong style="color: #eee;">Input order dependence:</strong> The first few data points seed the initial centroids. Different orderings can produce different cluster structures, especially with small datasets.</li>
+                <li><strong style="color: #eee;">No cluster merging:</strong> Once created, clusters are never merged. If two clusters drift close together, they remain separate. A post-processing merge step could address this.</li>
+                <li><strong style="color: #eee;">Linear centroid scan:</strong> Each point requires O(k) distance computations. For very large k, a spatial index (e.g., KD-tree) could improve lookup time.</li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section><!-- /Algorithm Documentation Section -->
+
     <!-- Portfolio Section -->
     <section id="portfolio" class="portfolio section">
 
@@ -1269,7 +1594,7 @@
               <i class="bi bi-envelope flex-shrink-0"></i>
               <div>
                 <h3>Email Us</h3>
-                <p>support@ncs-api.com</p>
+                <p>info@heronixedu.com</p>
               </div>
             </div><!-- End Info Item -->
 
@@ -1344,7 +1669,7 @@
             <p>NeuroCluster Streamer</p>
             <p>Algorithm API Platform</p>
             <p class="mt-3"><strong>Web:</strong> <span>ncs-api.com</span></p>
-            <p><strong>Email:</strong> <span>support@ncs-api.com</span></p>
+            <p><strong>Email:</strong> <span>info@heronixedu.com</span></p>
           </div>
         </div>
 
@@ -1479,7 +1804,7 @@
           const body = encodeURIComponent(
             'Name: ' + formData.name + '\nEmail: ' + formData.email + '\n\n' + formData.message
           );
-          window.location.href = 'mailto:support@ncs-api.com?subject=' + subject + '&body=' + body;
+          window.location.href = 'mailto:info@heronixedu.com?subject=' + subject + '&body=' + body;
           sentMsg.style.display = 'block';
           sentMsg.textContent = 'Opening your email client...';
         });
