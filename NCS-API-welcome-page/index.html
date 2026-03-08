@@ -4427,13 +4427,13 @@
       outlineLine.position.y = 0.05;
       scene.add(outlineLine);
 
-      // Filled Florida land shape
+      // Filled Florida land shape — use (x, -z) so rotation maps correctly to XZ plane
       const shape = new THREE.Shape();
       const first = geoTo3D(FL_OUTLINE[0][0], FL_OUTLINE[0][1]);
-      shape.moveTo(first.x, first.z);
+      shape.moveTo(first.x, -first.z);
       for (let i = 1; i < FL_OUTLINE.length; i++) {
         const p = geoTo3D(FL_OUTLINE[i][0], FL_OUTLINE[i][1]);
-        shape.lineTo(p.x, p.z);
+        shape.lineTo(p.x, -p.z);
       }
       shape.closePath();
       const landGeo = new THREE.ShapeGeometry(shape);
@@ -4448,26 +4448,7 @@
       oceanGrid.position.y = -0.05;
       scene.add(oceanGrid);
 
-      // Label: "GULF OF MEXICO" and "ATLANTIC"
-      function makeLabel(text, x, y, z, color, sc) {
-        const c = document.createElement('canvas');
-        c.width = 512; c.height = 64;
-        const ctx = c.getContext('2d');
-        ctx.font = 'bold 28px monospace';
-        ctx.fillStyle = '#' + (color || 0x446688).toString(16).padStart(6, '0');
-        ctx.textAlign = 'center';
-        ctx.globalAlpha = 0.5;
-        ctx.fillText(text, 256, 42);
-        const tex = new THREE.CanvasTexture(c);
-        const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
-        sp.position.set(x, y, z);
-        sp.scale.set((sc || 1) * 12, (sc || 1) * 1.5, 1);
-        scene.add(sp);
-        return sp;
-      }
-      makeLabel('GULF OF MEXICO', -15, 0.5, 8, 0x1a4a6a, 0.8);
-      makeLabel('ATLANTIC OCEAN', 15, 0.5, -3, 0x1a4a6a, 0.8);
-      makeLabel('FLORIDA', 0, 0.5, -14, 0x7cc576, 0.5);
+      // No text labels on the 3D scene — simulation visuals only
 
       // === REAL FLORIDA WEATHER STATIONS ===
       const STATION_DEFS = [
@@ -4608,8 +4589,8 @@
           sphere.position.set(pos.x, pos.y + 0.5, pos.z);
           scene.add(sphere);
 
-          // Station name label
-          const label = createWxLabel(def.name, pos.x, 2.0, pos.z, 0xaaaaaa, 0.3);
+          // No text labels on 3D objects — station info shown in inspector panel
+          const label = null;
 
           // Baseline Florida weather (summer): temp 80-92°F, humidity 60-85%, wind 5-15mph, pressure 1010-1020, precip 0-0.2
           const station = {
